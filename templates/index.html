@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Redundancy Engine</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { 
+            background: linear-gradient(rgba(3, 7, 18, 0.85), rgba(3, 7, 18, 0.92)), 
+                        url('https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=1920&auto=format&fit=crop');
+            background-size: cover; background-position: center; background-attachment: fixed;
+            color: #f8fafc; min-height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; padding: 20px;
+        }
+        .container { 
+            background: rgba(17, 24, 39, 0.75); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 24px; padding: 36px; width: 100%; max-width: 680px;
+            box-shadow: 0 0 50px rgba(168, 85, 247, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.9);
+        }
+        .header { display: flex; align-items: center; gap: 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 20px; margin-bottom: 24px; }
+        .icon-box { 
+            width: 52px; height: 52px; background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%); 
+            border-radius: 14px; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
+        }
+        h2 { margin: 0; color: #f3f4f6; font-size: 24px; font-weight: 700; }
+        textarea { width: 100%; height: 110px; background: rgba(3, 7, 18, 0.7); border: 1.5px solid rgba(168, 85, 247, 0.3); border-radius: 14px; color: #f8fafc; padding: 16px; font-size: 15px; outline: none; margin-bottom: 18px; resize: none; }
+        textarea:focus { border-color: #a855f7; box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); }
+        button { width: 100%; background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%); color: white; border: none; padding: 14px; font-size: 15px; font-weight: 600; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4); }
+        button:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(168, 85, 247, 0.6); }
+        .result { margin-top: 18px; font-weight: 600; font-size: 15px; text-align: center; min-height: 24px; }
+        h3 { margin-top: 32px; color: #9ca3af; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; }
+        ul { list-style: none; padding: 0; margin: 0; max-height: 220px; overflow-y: auto; }
+        li { background: rgba(3, 7, 18, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-left: 4px solid #a855f7; padding: 14px 18px; border-radius: 12px; margin-bottom: 10px; font-size: 14px; word-break: break-all; }
+        li:hover { transform: translateX(6px); border-color: #a855f7; background: rgba(168, 85, 247, 0.1); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="icon-box">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+            </div>
+            <div>
+                <h2>Data Redundancy Engine</h2>
+                <span style="font-size: 13px; color: #a855f7; font-weight: 500;">SHA-256 Real-time Data Deduplication</span>
+            </div>
+        </div>
+
+        <textarea id="dataInput" placeholder="Type or paste text to verify SHA-256 uniqueness check..."></textarea>
+        <button onclick="submitData()">Check & Save Data</button>
+        <div id="result" class="result"></div>
+
+        <h3>Verified Storage Records</h3>
+        <ul id="recordList"></ul>
+    </div>
+
+    <script>
+        async function fetchRecords() {
+            const res = await fetch('/get_records');
+            const data = await res.json();
+            const list = document.getElementById('recordList');
+            list.innerHTML = '';
+            data.records.forEach(r => {
+                const li = document.createElement('li');
+                li.innerHTML = `<b>[ID #${r[0]}]</b> ${r[1]} <br><span style="color:#c084fc; font-size:12px;">Hash: ${r[2].substring(0, 24)}...</span>`;
+                list.appendChild(li);
+            });
+        }
+
+        async function submitData() {
+            const content = document.getElementById('dataInput').value;
+            const resDiv = document.getElementById('result');
+            if(!content.trim()) return;
+
+            const formData = new FormData();
+            formData.append('content', content);
+
+            const res = await fetch('/add_data', { method: 'POST', body: formData });
+            const data = await res.json();
+            
+            if (res.status === 201) {
+                resDiv.style.color = '#34d399';
+            } else {
+                resDiv.style.color = '#f87171';
+            }
+            resDiv.innerText = data.message;
+            document.getElementById('dataInput').value = '';
+            fetchRecords();
+        }
+
+        fetchRecords();
+    </script>
+</body>
+</html>
